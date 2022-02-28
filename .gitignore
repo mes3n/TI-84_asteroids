@@ -1,3 +1,4 @@
 obj/*
-bin/*
+*.bin
+*.map
 .DS_Store
