@@ -13,34 +13,51 @@
 const uint8_t shipWidth = 10;
 const uint8_t shipHeight = 20;
 
+// vector struct
 struct vector2 {
     float x;
     float y;
 };
 
+// attributes for the ship
 struct ship {
 
+    // for drawing and calculation position
     struct vector2 velocity;
     struct vector2 center;
- 
+
+    // calculating position and velocity
     float speed;
     uint16_t rotation;
     float acceleration;
 
+    // creating the asteroids shape
     uint8_t nCorners;
     float relShape[8];
     int shape[8];
 
+    // survivability
     uint8_t lives;
     int invulnerability;
 
 } ship;
 
-struct asteroid {
+// attributes for the shots
+struct shot {
 
+    // positional attributes
     struct vector2 velocity;
     struct vector2 center;
 
+} shots[20];
+
+struct asteroid {
+
+    // positional attributes
+    struct vector2 velocity;
+    struct vector2 center;
+
+    // shape calculations
     uint8_t radius;
     uint8_t nCorners;
     float relShape[asteroidCorners*2];
@@ -48,12 +65,13 @@ struct asteroid {
 
 } asteroids[numAsteroids];
 
-
+// rotates array passed to points around center by rotation
+// degrees with nCorners amount of corner
 void rotate (float *points, int rotation, int nCorners) {
-    // rotates array passed to points around center by rotation degrees with nCorners amount of corners
 
-    float theta = rotation / (180/M_PI);
+    float theta = rotation / (180/M_PI);  // convert from degrees to radians
 
+    // rotates the list of points with a matrix
     for (uint8_t i = 0; i < nCorners*2; i += 2) {
         float x = -1*(points[i])*cos(theta) - (points[i+1])*sin(theta);
         float y = -1*(points[i])*sin(theta) + (points[i+1])*cos(theta);
@@ -64,6 +82,7 @@ void rotate (float *points, int rotation, int nCorners) {
 
 }
 
+// set the relative shape of the shape based of a center (offX, offY)
 void setShipRelShape (float *points, const uint8_t shipWidth, const uint8_t shipHeight,
     const int8_t offX, const int8_t offY) {
 
@@ -78,19 +97,24 @@ void setShipRelShape (float *points, const uint8_t shipWidth, const uint8_t ship
 
 }
 
+// move the ship
 void shipMove () {
 
+    // calculate velocity with trigonometry
     if (ship.acceleration) {
         ship.velocity.x += ship.acceleration * cos(ship.rotation / (180/M_PI));
         ship.velocity.y += ship.acceleration * sin(ship.rotation / (180/M_PI));
     }
 
+    // move ship
     ship.center.x += ship.velocity.x;
     ship.center.y += ship.velocity.y;
 
+    // deaccalerate
     ship.velocity.x *= 0.97;
     ship.velocity.y *= 0.97;
 
+    // make sure ship is within map
     if (ship.center.x < 0)
         ship.center.x += WIDTH;
     if (ship.center.x > WIDTH)
@@ -104,40 +128,49 @@ void shipMove () {
 
 void genShipShape () {
 
-    rotate(ship.relShape, ship.rotation, ship.nCorners);
+    rotate(ship.relShape, ship.rotation, ship.nCorners); // rotate ship offset
     for (uint8_t i = 0; i < ship.nCorners*2; i += 2) {
+        // add the ship offset to its center
         ship.shape[i] = ship.center.x + ship.relShape[i];
         ship.shape[i+1] = ship.center.y + ship.relShape[i+1];
     }
+    // reset the ship offset
     setShipRelShape(ship.relShape, shipWidth, shipHeight, 0, 0);
 
 }
 
+// initialize variables for asteroids
 void asteroidInit () {
 
     for (uint8_t i = 0; i < numAsteroids; i++) {
+        // random size
         asteroids[i].radius = randInt(20, 25);
         asteroids[i].nCorners = asteroidCorners;
 
+        // random center
         asteroids[i].center.x = randInt(0, WIDTH);
         asteroids[i].center.y = randInt(0, HEIGHT);
 
+        // set random speed and direction
         uint8_t speed = randInt(10, 20) / 10;
         uint16_t direction = randInt(0, 360);
         asteroids[i].velocity.x = speed * cos(direction / (180/M_PI));
         asteroids[i].velocity.y = speed * sin(direction / (180/M_PI));
 
+        // create the ships shape
         for (uint8_t j = 0; j < asteroids[i].nCorners*2; j += 2) {
             asteroids[i].relShape[j] = randInt(asteroids[i].radius / 2,
                 asteroids[i].radius)*cos(2*M_PI*(j*0.5/asteroids[i].nCorners));
             asteroids[i].relShape[j+1] = randInt(asteroids[i].radius / 2,
                 asteroids[i].radius)*sin(2*M_PI*(j*0.5/asteroids[i].nCorners));
         }
+        // random rotation
         rotate(asteroids[i].relShape, randInt(0, 60), asteroids[i].nCorners);
     }
 
 }
 
+// move asteroids and control wheather they are within bounds
 void asteroidMove () {
 
     for (uint8_t i = 0; i < numAsteroids; i++) {
@@ -160,37 +193,7 @@ void asteroidMove () {
 
 }
 
-/*
-uint8_t rayCastingCollision_og (int *points, uint8_t corners_points, int *polygon, uint8_t corners_polygon) {
-    uint8_t intersects = 0;
-
-    for (uint8_t i = 0; i < corners_points*2; i += 2) {
-        for (uint8_t j = 0; j < corners_polygon*2; j += 2) {
-            int16_t x1 = polygon[j];
-            int16_t y1 = polygon[j + 1];
-            int16_t x2 = polygon[j == 0 ? (corners_polygon*2)-2 : j - 2];
-            int16_t y2 = polygon[j == 0 ? (corners_polygon*2)-1 : j - 1];
-
-            if (x1 - x2 != 0 && y1 - y2 != 0) {
-                float k = ((y2 - y1)/(x2 - x1));
-                float x = ((points[i + 1] - y1)/k) + x1;
-
-                if (x < points[i]) {
-                    if (x2 < x1) {
-                        if (x2 < x && x < x1) intersects += 1;
-                    }
-                    if (x1 < x2) {
-                        if (x1 < x && x < x2) intersects += 1;
-                    }
-                }
-            }
-        }
-    }
-
-    return (intersects % 2);  // return 1 if odd n intersects <=> inside polygon
-}
-*/
-
+// collision detection for a point and a polygon
 uint8_t rayCastingCollision (int *points, uint8_t corners_points, int *polygon, uint8_t corners_polygon) {
     uint8_t intersects = 0;
 
@@ -203,48 +206,34 @@ uint8_t rayCastingCollision (int *points, uint8_t corners_points, int *polygon, 
             int16_t x2 = polygon[j == 0 ? (corners_polygon*2)-2 : j - 2];
             int16_t y2 = polygon[j == 0 ? (corners_polygon*2)-1 : j - 1];
 
-            /*if (y1 - y2 != 0) {
-                float x;
-                if (x1 - x2 == 0) {
-                    x = x1; // or x2
-                }
-                else {
-                    float k = ((y2 - y1)/(x2 - x1));
-                    x = ((points[i + 1] - y1)/k) + x1;
-                }
-
-                if (x < points[i]) {
-                    if (x2 < x1) {
-                        if (x2 < x && x < x1) intersects += 1;
-                    }
-                    if (x1 < x2) {
-                        if (x1 < x && x < x2) intersects += 1;
-                    }
-                    if (x1 == x2) {
-                        intersects += 1;
-                    }
-                }
-            }*/
-
+            // idk gave up and copied it
             if (((y1 > py) != (y2 > py)) && (px < (x2 - x1) * (py - y1) / (y2 - y1) + x1))
                 intersects += 1;
 
         }
+        // if intersects is odd the ray started inside the polygon
+        // this means the point is inside the polygon
         if (intersects % 2 == 1) return 1;
-        else intersects = 0;
+            else intersects = 0; // reset
     }
     return 0;
 }
 
+void shoot () {
+
+
+
+}
+
 void draw () {
 
-    gfx_ZeroScreen();
+    gfx_ZeroScreen(); // fill screen with first color in global pallette (black)
 
-    gfx_SetColor(255);
+    gfx_SetColor(255); // set draw color to white
 
-    gfx_Polygon(ship.shape, ship.nCorners);
+    gfx_Polygon(ship.shape, ship.nCorners); // draw ship
     for (uint8_t i = 0; i < numAsteroids; i++) {
-        gfx_Polygon(asteroids[i].shape, asteroids[i].nCorners);
+        gfx_Polygon(asteroids[i].shape, asteroids[i].nCorners); // draw asteroids
     }
 
     /*
@@ -253,26 +242,28 @@ void draw () {
         6, 10,
         4, 3,
         2, 10
-    };*/
+    };
+    */
+
     for (uint8_t i = 0; i < ship.lives; i++) {
         int miniShipShape[8] = {
             5 + 0 + 8*i, 8 + -6,
             5 + 3 + 8*i, 8 + 6,
             5 + 0 + 8*i, 8 + 5,
             5 + -3 + 8*i, 8 + 6
-        };
-        gfx_Polygon(miniShipShape, 4);
+        }; // small ship shape offset by center (8*i, 8)
+        gfx_Polygon(miniShipShape, 4); // draw small ships
     }
 
-    gfx_SwapDraw();
+    gfx_SwapDraw(); // show the buffer
 
 }
 
 int main (void) {
 
-    kb_key_t key;
-    gfx_Begin();
-    gfx_SetDrawBuffer();
+    kb_key_t key;  // variable to hold keypad input
+    gfx_Begin(); // start drawing routine
+    gfx_SetDrawBuffer(); // set drawing to buffer
 
     ship.lives = 3;
     ship.center.x = WIDTH / 2;
@@ -297,6 +288,10 @@ int main (void) {
         ship.acceleration = (key & kb_Up ? 0.6 : 0);
         ship.rotation += (key & kb_Left ? -18 : 0);
         ship.rotation += (key & kb_Right ? 18 : 0);
+
+        key = kb_Data[1];
+
+        if (key & kb_2nd) shoot();
 
         shipMove();
 
@@ -327,8 +322,8 @@ int main (void) {
 
         draw();
 
-    } while (ship.lives && kb_Data[6] != kb_Clear);
+    } while (ship.lives && kb_Data[6] != kb_Clear); // exit if clear is pressed or all lives are lost
 
-    gfx_End();
+    gfx_End(); // stop drawing routine
     return 0;
 }
