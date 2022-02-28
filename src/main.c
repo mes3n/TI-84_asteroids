@@ -8,6 +8,8 @@
 #define WIDTH 320
 #define HEIGHT 240
 #define numAsteroids 10
+#define maxNumAsteroids 40
+#define numShots 10
 #define asteroidCorners 7
 
 const uint8_t shipWidth = 10;
@@ -49,7 +51,7 @@ struct shot {
     struct vector2 velocity;
     struct vector2 center;
 
-} shots[20];
+} shots[numShots];
 
 struct asteroid {
 
@@ -63,7 +65,7 @@ struct asteroid {
     float relShape[asteroidCorners*2];
     int shape[asteroidCorners*2];
 
-} asteroids[numAsteroids];
+} asteroids[maxNumAsteroids];
 
 // rotates array passed to points around center by rotation
 // degrees with nCorners amount of corner
@@ -86,14 +88,14 @@ void rotate (float *points, int rotation, int nCorners) {
 void setShipRelShape (float *points, const uint8_t shipWidth, const uint8_t shipHeight,
     const int8_t offX, const int8_t offY) {
 
-    points[0] = -shipHeight/2 + offX;
+    points[0] = -shipHeight*0.5 + offX;
     points[1] = 0 + offY;
-    points[2] = shipHeight/2 + offX;
-    points[3] = shipWidth/2 + offY;
+    points[2] = shipHeight*0.5 + offX;
+    points[3] = shipWidth*0.5 + offY;
     points[4] = 0.425*shipHeight + offX;
     points[5] = 0 + offY;
-    points[6] = shipHeight/2 + offX;
-    points[7] = -shipWidth/2 + offY;
+    points[6] = shipHeight*0.5 + offX;
+    points[7] = -shipWidth*0.5 + offY;
 
 }
 
@@ -137,6 +139,27 @@ void genShipShape () {
     // reset the ship offset
     setShipRelShape(ship.relShape, shipWidth, shipHeight, 0, 0);
 
+}
+
+// move the shots
+void shotMove () {
+    for (uint8_t i = 0; i < numShots; i++) {
+        if (shots[i].center.x != -1 && shots[i].center.y != -1) {
+
+            // move shot
+            shots[i].center.x += shots[i].velocity.x;
+            shots[i].center.y += shots[i].velocity.y;
+
+            // make sure shot is within map
+            if (shots[i].center.x < 0 || shots[i].center.x > WIDTH ||
+                shots[i].center.y < 0 || shots[i].center.y > HEIGHT) {
+                    shots[i].center.x = -1;
+                    shots[i].center.y = -1;
+                    shots[i].velocity.x = 0;
+                    shots[i].velocity.y = 0;
+            }
+        }
+    }
 }
 
 // initialize variables for asteroids
@@ -221,7 +244,21 @@ uint8_t rayCastingCollision (int *points, uint8_t corners_points, int *polygon, 
 
 void shoot () {
 
+    for (uint8_t i = 0; i < numShots; i++) {
+        if (shots[i].center.x == -1 && shots[i].center.y == -1) {
 
+            // set shot center to the ship's tip
+            shots[i].center.x = ship.shape[0];
+            shots[i].center.y = ship.shape[1];
+
+            // give twice the velocity of ship
+            uint8_t speed = 7;
+            shots[i].velocity.x = speed * cos(ship.rotation / (180/M_PI));
+            shots[i].velocity.y = speed * sin(ship.rotation / (180/M_PI));
+
+            return;
+        }
+    }
 
 }
 
@@ -234,6 +271,13 @@ void draw () {
     gfx_Polygon(ship.shape, ship.nCorners); // draw ship
     for (uint8_t i = 0; i < numAsteroids; i++) {
         gfx_Polygon(asteroids[i].shape, asteroids[i].nCorners); // draw asteroids
+    }
+    for (uint8_t i = 0; i < numShots; i++) {
+        if (shots[i].center.x != -1 && shots[i].center.y != -1) {
+            gfx_Line(shots[i].center.x, shots[i].center.y,
+                shots[i].center.x - shots[i].velocity.x,
+                shots[i].center.y - shots[i].velocity.y);
+        }
     }
 
     /*
@@ -276,6 +320,15 @@ int main (void) {
     ship.nCorners = 4;
     setShipRelShape(ship.relShape, shipWidth, shipHeight, 0, 0);
 
+    for (uint8_t i = 0; i < numShots; i++) {
+        shots[i].center.x = -1;
+        shots[i].center.y = -1;
+
+        shots[i].velocity.x = 0;
+        shots[i].velocity.y = 0;
+    }
+    uint8_t shotCooldown = 10;
+
     asteroidInit();
 
     ship.invulnerability = 100;
@@ -291,9 +344,20 @@ int main (void) {
 
         key = kb_Data[1];
 
-        if (key & kb_2nd) shoot();
+        // make sure the player can't rapid fire
+        if (shotCooldown) {
+            shotCooldown -= 1;
+        }
+        else {
+            if (key & kb_2nd) {
+                shotCooldown = 10;
+                shoot();
+            }
+        }
 
         shipMove();
+
+        shotMove();
 
         asteroidMove();
 
