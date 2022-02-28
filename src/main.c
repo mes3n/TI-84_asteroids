@@ -22,7 +22,7 @@ struct ship {
 
     struct vector2 velocity;
     struct vector2 center;
-
+ 
     float speed;
     uint16_t rotation;
     float acceleration;
