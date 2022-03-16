@@ -51,6 +51,8 @@ struct shot {
     struct vector2 velocity;
     struct vector2 center;
 
+    int shape[2];
+
 } shots[numShots];
 
 struct asteroid {
@@ -158,6 +160,8 @@ void shotMove () {
                     shots[i].velocity.x = 0;
                     shots[i].velocity.y = 0;
             }
+            shots[i].shape[0] = shots[i].center.x;
+            shots[i].shape[1] = shots[i].center.y;
         }
     }
 }
@@ -344,15 +348,16 @@ int main (void) {
 
         key = kb_Data[1];
 
-        // make sure the player can't rapid fire
+        // make sure the player can't rapid fire by holding down kb_2nd
         if (shotCooldown) {
             shotCooldown -= 1;
         }
-        else {
-            if (key & kb_2nd) {
+        else if (key & kb_2nd) {
                 shotCooldown = 10;
                 shoot();
-            }
+        }
+        else if (!(key & kb_2nd)) {
+            shotCooldown = 0;
         }
 
         shipMove();
@@ -365,10 +370,13 @@ int main (void) {
 
         if (ship.invulnerability <= 0) {
             for (uint8_t i = 0; i < numAsteroids; i++) {
+
                 if ((ship.center.x - asteroids[i].center.x)*(ship.center.x - asteroids[i].center.x)
                   + (ship.center.y - asteroids[i].center.y)*(ship.center.y - asteroids[i].center.y)
                   <= (shipHeight/2 + 25)*(shipHeight/2 + 25)) {
-                    if (rayCastingCollision(ship.shape, ship.nCorners, asteroids[i].shape, asteroids[i].nCorners)) {
+
+                    if (rayCastingCollision(ship.shape, ship.nCorners, asteroids[i].shape, asteroids[i].nCorners) ||
+                        rayCastingCollision(asteroids[i].shape, asteroids[i].nCorners, ship.shape, ship.nCorners)) {
                         ship.invulnerability = 100;
                         ship.center.x = WIDTH / 2;
                         ship.center.y = HEIGHT / 2;
@@ -382,6 +390,20 @@ int main (void) {
         }
         else {
             ship.invulnerability -= 1;
+        }
+
+        for (uint8_t i = 0; i < numAsteroids; i++) {
+            for (uint8_t ii = 0; ii < numShots; ii++) {
+
+                if (pow((shots[ii].center.x - asteroids[i].center.x), 2) + pow((shots[ii].center.y - asteroids[i].center.y), 2) < pow(asteroids[i].radius, 2)) {
+                    if (rayCastingCollision(shots[ii].shape, 2, asteroids[i].shape, asteroids[i].nCorners)) {
+                        // ADD THE DEATH OF ASTEROIDS HERE
+                        shots[ii].center.x = -1;
+                        shots[ii].center.y = -1;
+                    }
+                }
+
+            }
         }
 
         draw();
