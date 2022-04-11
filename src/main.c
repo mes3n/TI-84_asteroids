@@ -28,7 +28,7 @@ struct ship {
     uint16_t rotation;
     float acceleration;
 
-    // creating the asteroids shape
+    // creating the ship's shape
     uint8_t nCorners;
     float relShape[8];
     int shape[8];
@@ -36,6 +36,9 @@ struct ship {
     // survivability
     uint8_t lives;
     int invulnerability;
+
+    // score
+    uint16_t score;
 
 } ship;
 
@@ -294,7 +297,9 @@ void checkCollisions () {
                     <=  (asteroids[i].radius*asteroids[i].radius)) {
 
                         if (rayCastingCollision(shots[ii].shape, 1, asteroids[i].shape, asteroidCorners)) {
-                            if (asteroids[i].radius > 12) asteroidSplit(i);
+                            ship.score += 25 - asteroids[i].radius;
+
+                            if (asteroids[i].radius > 15) asteroidSplit(i);
                             else asteroids[i].radius = 0;
 
                             shots[ii].center.x = -1;
@@ -310,6 +315,8 @@ void checkCollisions () {
 void init () {
 
     ship.lives = 3;
+    ship.score = 0;
+
     ship.center.x = WIDTH / 2;
     ship.center.y = HEIGHT / 2;
 
@@ -381,6 +388,13 @@ void draw () {
         }; // small ship shape offset by center (8*i, 8)
         gfx_Polygon(miniShipShape, 4); // draw small ships
     }
+
+    gfx_SetTextFGColor(255);
+    gfx_SetTextBGColor(0);
+    gfx_SetTextTransparentColor(0);
+
+    gfx_SetTextXY(5 + 3 + 8*ship.lives, 8 - 2);
+    gfx_PrintUInt(ship.score, 4);
 
     gfx_SwapDraw(); // show the buffer
 
