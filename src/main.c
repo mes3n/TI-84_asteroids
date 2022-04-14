@@ -9,6 +9,8 @@ Asteroid asteroids[maxNumAsteroids];
 
 // TODO.txt
 // add "acceleration" for the player's rotation
+// see over frame drops - optimize loops
+// add "waves" of asteroids spawning
 
 void init (uint8_t mode) {
     if (mode == 0) {
