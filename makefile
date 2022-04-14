@@ -3,7 +3,7 @@
 # ----------------------------
 
 NAME = asteroid
-ICON =
+ICON = icon.png
 DESCRIPTION = "asteroids game by mes3n"
 COMPRESSED = NO
 ARCHIVED = NO # YES
