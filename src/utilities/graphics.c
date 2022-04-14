@@ -94,20 +94,22 @@ void draw (void) {
 
 }
 
-void drawMenu (void) {
+void drawMenu (uint16_t highscore, uint8_t mode) {
 
     gfx_ZeroScreen();
 
-    asteroidInit(asteroids, 10);
-    for (uint8_t i = 0; i < 5; i++) {
-        asteroidSplit(asteroids, i);
+    if (mode == 0) {
+        asteroidInit(asteroids, 10);
+        for (uint8_t i = 0; i < 5; i++) {
+            asteroidSplit(asteroids, i);
+        }
+        asteroidMove(asteroids, 50);
     }
-    asteroidMove(asteroids, 50);
 
     for (uint8_t i = 0; i < maxNumAsteroids; i++) {
         if (asteroids[i].radius) {
             gfx_Polygon(asteroids[i].shape, asteroidCorners); // draw asteroids
-            gfx_BlitBuffer();
+            if (mode == 0) gfx_BlitBuffer();
         }
     }
 
@@ -120,8 +122,19 @@ void drawMenu (void) {
     gfx_SetTextFGColor(WHITE);
     gfx_PrintStringXY("ASTEROIDS", x_pos - 1, HEIGHT * 0.2);
 
+    gfx_SetTextScale(1, 1);
+
+    char score[6];  // 20
+    real_t tmp_real = os_FloatToReal(highscore);
+    os_RealToStr(score, &tmp_real, 6, 0, -1);
+
+    x_pos = (WIDTH - (gfx_GetStringWidth("highscore - ") + gfx_GetStringWidth(score))) * 0.5;
+    gfx_PrintStringXY("highscore - ", x_pos, HEIGHT * 0.2 + 30);
+    gfx_PrintStringXY(score, x_pos + gfx_GetStringWidth("highscore - "), HEIGHT * 0.2 + 30);
+
+
+
     gfx_SwapDraw();
 
-    gfx_SetTextScale(1, 1);
 
 }
