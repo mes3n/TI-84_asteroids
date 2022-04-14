@@ -1,23 +1,25 @@
 #ifndef SHOT_H
 #define SHOT_H
 
-#include "../logic.h"
+#include "../utilities/logic.h"
 
-#define maxNumShots 16
+#define maxNumShots 10
 
 // attributes for the shots
-struct shot {
+typedef struct Shot {
 
     // positional attributes
-    struct vector2 velocity;
-    struct vector2 center;
+    vector2 velocity;
+    vector2 center;
 
     int shape[2];
 
-} shots[maxNumShots];
+} Shot;
 
-void shotInit(struct shot *);
-void shotShoot(struct shot *, int, int, uint16_t);
-void shotMove(struct shot *, float);
+extern Shot shots[maxNumShots];
+
+void shotInit(Shot *);
+void shotShoot(Shot *, int, int, uint16_t);
+void shotMove(Shot *, float);
 
 #endif  // SHOT_H

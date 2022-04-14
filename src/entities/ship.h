@@ -1,19 +1,17 @@
 #ifndef SHIP_H
 #define SHIP_H
 
-#include <tice.h>
-
-#include "../logic.h"
+#include "../utilities/logic.h"
 
 const uint8_t shipWidth = 10;
 const uint8_t shipHeight = 20;
 
 // attributes for the ship
-struct ship {
+typedef struct Ship {
 
     // for drawing and calculation position
-    struct vector2 velocity;
-    struct vector2 center;
+    vector2 velocity;
+    vector2 center;
 
     // calculating position and velocity
     float speed;
@@ -32,12 +30,13 @@ struct ship {
     // score
     uint16_t score;
 
-} ship;
+} Ship;
 
+extern Ship ship;
 
-void shipInit(struct ship *);
-void shipMove(struct ship *, float);
-void genShipShape(struct ship *);
+void shipSpawn(Ship *, uint8_t);
+void shipMove(Ship *, float);
+void genShipShape(Ship *);
 void setShipRelShape(float *, const uint8_t, const uint8_t, const int8_t, const int8_t);
 
 #endif  // SHIP_H

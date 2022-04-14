@@ -1,24 +1,25 @@
 #include "ship.h"
 
-void shipInit (struct ship * ship) {
+void shipSpawn (Ship * ship, uint8_t mode) {
 
-    ship->lives = 3;
-    ship->score = 0;
+    if (mode == 0) {
+        ship->lives = 3;
+        ship->score = 0;
 
+        ship->nCorners = 4;
+        ship->rotation = 270;
+    }
     ship->center.x = WIDTH / 2;
     ship->center.y = HEIGHT / 2;
 
     ship->velocity.x = 0;
     ship->velocity.y = 0;
-    ship->rotation = 270;
 
-    ship->nCorners = 4;
     ship->invulnerability = 100;
-
 }
 
 // move the ship
-void shipMove (struct ship * ship, float dt) {
+void shipMove (Ship * ship, float dt) {
 
     // calculate velocity with trigonometry
     if (ship->acceleration) {
@@ -46,7 +47,7 @@ void shipMove (struct ship * ship, float dt) {
 
 }
 
-void genShipShape (struct ship * ship) {
+void genShipShape (Ship * ship) {
 
     rotate(ship->relShape, ship->rotation, ship->nCorners); // rotate ship offset
     for (uint8_t i = 0; i < ship->nCorners*2; i += 2) {

@@ -1,7 +1,6 @@
-#include <tice.h>
 #include "shot.h"
 
-void shotInit (struct shot * shots) {
+void shotInit (Shot * shots) {
 
     for (uint8_t i = 0; i < maxNumShots; i++) {
         shots[i].center.x = -1;
@@ -13,7 +12,7 @@ void shotInit (struct shot * shots) {
 }
 
 // shoot the a shot from ships tip
-void shotShoot (struct shot * shots, int origin_x, int origin_y, uint16_t direction) {
+void shotShoot (Shot * shots, int origin_x, int origin_y, uint16_t direction) {
 
     for (uint8_t i = 0; i < maxNumShots; i++) {
         if (shots[i].center.x == -1 && shots[i].center.y == -1) {  // find empty
@@ -33,7 +32,7 @@ void shotShoot (struct shot * shots, int origin_x, int origin_y, uint16_t direct
 }
 
 // move the shots
-void shotMove (struct shot * shots, float dt) {
+void shotMove (Shot * shots, float dt) {
     for (uint8_t i = 0; i < maxNumShots; i++) {
         if (shots[i].center.x != -1 || shots[i].center.y != -1) {
 

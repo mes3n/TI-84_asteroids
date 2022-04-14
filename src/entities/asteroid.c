@@ -1,7 +1,7 @@
 #include "asteroid.h"
 
 // initialize variables for asteroids
-void asteroidInit (struct asteroid * asteroids, uint8_t amount) {
+void asteroidInit (Asteroid * asteroids, uint8_t amount) {
 
     for (uint8_t i = 0; i < amount; i++) {
         // random size
@@ -28,10 +28,14 @@ void asteroidInit (struct asteroid * asteroids, uint8_t amount) {
         rotate(asteroids[i].relShape, randInt(0, 360), asteroidCorners);
     }
 
+    for (uint8_t i = amount; i < maxNumAsteroids; i++) {
+        asteroids[i].radius = 0;
+    }
+
 }
 
 // move asteroids and control wheather they are within bounds
-void asteroidMove (struct asteroid * asteroids, float dt) {
+void asteroidMove (Asteroid * asteroids, float dt) {
 
     for (uint8_t i = 0; i < maxNumAsteroids; i++) {
         if (asteroids[i].radius) {
@@ -55,7 +59,7 @@ void asteroidMove (struct asteroid * asteroids, float dt) {
 }
 
 
-void asteroidSplit (struct asteroid * asteroids, uint8_t id) {
+void asteroidSplit (Asteroid * asteroids, uint8_t id) {
 
     float speedIncrease = 1.2;
     float sizeDecrease = 0.75;

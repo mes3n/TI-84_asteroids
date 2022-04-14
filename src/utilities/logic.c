@@ -53,7 +53,7 @@ float square (float val) {
     return val*val;
 }
 
-uint8_t nearby (struct vector2 p1, struct vector2 p2, float r) {
+uint8_t nearby (vector2 p1, vector2 p2, float r) {
 
     return ((square(p1.x - p2.x) + square(p1.y - p2.y) <= square(r)) ? 1 : 0);
 }

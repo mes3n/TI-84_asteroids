@@ -1,72 +1,35 @@
 #include <tice.h>
-#include <graphx.h>
-#include <keypadc.h>
+#include "utilities/graphics.h"
+#include "utilities/keypad.h"
+#include "gfx/gfx.h"
 
-#include "logic.h"  // also includes math.h libary
+#include "utilities/logic.h"  // also includes math.h libary
 
-#include "entities/asteroid.h"
-#include "entities/shot.h"
-#include "entities/ship.h"
+#include "entities.h"
+
+Ship ship;
+Shot shots[maxNumShots];
+Asteroid asteroids[maxNumAsteroids];
 
 // TODO.txt
 // add "acceleration" for the player's rotation
 
+void init (uint8_t mode) {
+    if (mode == 0) {
+        gfx_Begin(); // start drawing routine
+        gfx_SetDrawBuffer(); // set drawing to buffer
 
-void checkCollisions () {
+        gfx_SetPalette(global_palette, sizeof_global_palette, 0);
 
-    if (ship.invulnerability <= 0) {
-        for (uint8_t i = 0; i < maxNumAsteroids; i++) {
-            if (asteroids[i].radius) {
-                if (nearby(ship.center, asteroids[i].center, shipHeight/2 + asteroids[i].radius)) {
-
-                    if (rayCastingCollision(ship.shape, ship.nCorners, asteroids[i].shape, asteroidCorners) ||
-                        rayCastingCollision(asteroids[i].shape, asteroidCorners, ship.shape, ship.nCorners)) {
-                        ship.invulnerability = 100;
-                        ship.center.x = WIDTH / 2;
-                        ship.center.y = HEIGHT / 2;
-                        ship.velocity.x = 0;
-                        ship.velocity.y = 0;
-                        ship.lives -= 1;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    else {
-        ship.invulnerability -= 1;
+        gfx_SetColor(WHITE); // set draw color to white
+        gfx_SetTextFGColor(WHITE);  // set text color to white
+        gfx_SetTextBGColor(BLACK);  // set background to black
+        gfx_SetTextTransparentColor(BLACK);  // set all black to transparent
     }
 
-    for (uint8_t i = 0; i < maxNumAsteroids; i++) {
-        if (asteroids[i].radius) {
-
-            for (uint8_t ii = 0; ii < maxNumShots; ii++) {
-                if (shots[ii].center.x != -1 || shots[ii].center.y != -1) {
-
-                    if (nearby(shots[ii].center, asteroids[i].center, asteroids[i].radius)) {
-
-                        if (rayCastingCollision(shots[ii].shape, 1, asteroids[i].shape, asteroidCorners)) {
-                            ship.score += 25 - asteroids[i].radius;
-
-                            if (asteroids[i].radius > 15) asteroidSplit(asteroids, i);
-                            else asteroids[i].radius = 0;
-
-                            shots[ii].center.x = -1;
-                            shots[ii].center.y = -1;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-void init () {
-
-    shipInit(&ship);
+    shipSpawn(&ship, 0);
     shotInit(shots);
-    asteroidInit(asteroids, 10);
-
+    asteroidInit(asteroids, 6);
 
 }
 
@@ -80,110 +43,44 @@ void move (float dt) {
 
 }
 
-void draw () {
-
-    gfx_ZeroScreen(); // fill screen with first color in global pallette (black)
-
-    gfx_SetColor(255); // set draw color to white
-
-    gfx_Polygon(ship.shape, ship.nCorners); // draw ship
-    for (uint8_t i = 0; i < maxNumAsteroids; i++) {
-        if (asteroids[i].radius)
-            gfx_Polygon(asteroids[i].shape, asteroidCorners); // draw asteroids
-    }
-    for (uint8_t i = 0; i < maxNumShots; i++) {
-        if (shots[i].center.x != -1 || shots[i].center.y != -1) {
-            gfx_Line(shots[i].shape[0], shots[i].shape[1],
-                shots[i].shape[0] - shots[i].velocity.x,
-                shots[i].shape[1] - shots[i].velocity.y);
-        }
-    }
-
-    /*
-    int miniShipShape[8] = {
-        4, 2,
-        6, 10,
-        4, 3,
-        2, 10
-    };
-    */
-
-    for (uint8_t i = 0; i < ship.lives; i++) {
-        int miniShipShape[8] = {
-            5 + 0 + 8*i, 8 + -6,
-            5 + 3 + 8*i, 8 + 6,
-            5 + 0 + 8*i, 8 + 5,
-            5 + -3 + 8*i, 8 + 6
-        }; // small ship shape offset by center (8*i, 8)
-        gfx_Polygon(miniShipShape, 4); // draw small ships
-    }
-
-    gfx_SetTextFGColor(255);  // set text color to white
-    gfx_SetTextBGColor(0);  // set background to black
-    gfx_SetTextTransparentColor(0);  // set all black to transparent
-
-    gfx_SetTextXY(5 + 3 + 8*ship.lives, 8 - 2);  // slightly right off lives
-    gfx_PrintUInt(ship.score, 4);  // print the "text"
-
-    gfx_SwapDraw(); // show the buffer
-
-}
-
 int main (void) {
 
     const uint8_t TIMER = 1;
-
-    kb_key_t key;  // variable to hold keypad input
-    gfx_Begin(); // start drawing routine
-    gfx_SetDrawBuffer(); // set drawing to buffer
 
     timer_Enable(TIMER, TIMER_32K, TIMER_NOINT, TIMER_UP);
     timer_Set(TIMER, 0);  // set timer to 0
     float dt;  // time passed since last frame
 
-    const uint8_t fps = 30;
-    const uint16_t ticksPerFrame = 32000/fps;
+    const uint8_t FPS = 30;
+    const uint16_t ticksPerFrame = 32000/FPS;
 
-    uint8_t shotCooldown = 10;
+    init(0);
 
-    init();
+    do {  // app loop
 
-    do {
+        drawMenu();
+        while (!os_GetCSC()) {}
 
-        while (timer_Get(TIMER) < ticksPerFrame) {}  // do nothing until 1/{fps} seconds to have passed
+        do {  // gameloop
 
-        dt = timer_Get(TIMER) / ticksPerFrame;  // get factor for how much past said time it is
-        timer_Set(TIMER, 0);  // reset timer
+            while (timer_Get(TIMER) < ticksPerFrame) {}  // do nothing until 1/{fps} seconds to have passed
 
-        kb_Scan();  // scan keyboard
-        key = kb_Data[7];
+            dt = timer_Get(TIMER) / ticksPerFrame;  // get factor for how much past said time it is
+            timer_Set(TIMER, 0);  // reset timer
 
-        // if (key & {pressed_key}) do left option
-        ship.acceleration = (key & kb_Up ? 0.6 : 0);
-        ship.rotation += (key & kb_Left ? -18*dt : 0);
-        ship.rotation += (key & kb_Right ? 18*dt : 0);
+            scanKeypad(dt);
 
-        key = kb_Data[1];
+            move(dt);
 
-        // make sure the player can't rapid fire by holding down kb_2nd
-        if (!(key & kb_2nd)) {  // if kb_2nd isn't pressed
-            shotCooldown = 0;
-        }
-        else if (shotCooldown) {
-            shotCooldown -= 1;
-        }
-        else if (key & kb_2nd) {
-                shotShoot(shots, ship.shape[0], ship.shape[1], ship.rotation);
-                shotCooldown = 10;
-        }
+            checkCollisions();
 
-        move(dt);
+            draw();
 
-        checkCollisions();
+        } while (ship.lives && kb_Data[6] != kb_Clear); // exit if dead or clear was pressed
 
-        draw();
+        init(1);
 
-    } while (ship.lives && kb_Data[6] != kb_Clear); // exit if all lives are lost or clear is pressed
+    } while (kb_Data[6] != kb_Clear);  // exit if clear is pressed
 
     gfx_End(); // stop drawing routines
     return 0;  // exit program

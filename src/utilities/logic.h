@@ -8,10 +8,10 @@
 #define HEIGHT 240
 
 // vector struct
-struct vector2 {
+typedef struct vector2 {
     float x;
     float y;
-};
+} vector2;
 
 void rotate (float *, int, int);
 uint8_t rayCastingCollision (int *, uint8_t, int *, uint8_t);
