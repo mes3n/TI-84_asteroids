@@ -19,21 +19,6 @@ void rotate (float *points, int rotation, int nCorners) {
 
 }
 
-// set the relative shape of the shape based of a center (offX, offY)
-void setShipRelShape (float *points, const uint8_t shipWidth, const uint8_t shipHeight,
-    const int8_t offX, const int8_t offY) {
-
-    points[0] = -shipHeight*0.5 + offX;
-    points[1] = 0 + offY;
-    points[2] = shipHeight*0.5 + offX;
-    points[3] = shipWidth*0.5 + offY;
-    points[4] = 0.425*shipHeight + offX;
-    points[5] = 0 + offY;
-    points[6] = shipHeight*0.5 + offX;
-    points[7] = -shipWidth*0.5 + offY;
-
-}
-
 // collision detection for a point and a polygon
 // checks if any of the "points" are inseide of the "polygon"
 uint8_t rayCastingCollision (int *points, uint8_t corners_points, int *polygon, uint8_t corners_polygon) {

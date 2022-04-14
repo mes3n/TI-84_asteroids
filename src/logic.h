@@ -1,4 +1,11 @@
+#ifndef LOGIC_H
+#define LOGIC_H
+
 #include <tice.h>
+#include <math.h>
+
+#define WIDTH 320
+#define HEIGHT 240
 
 // vector struct
 struct vector2 {
@@ -8,6 +15,6 @@ struct vector2 {
 
 void rotate (float *, int, int);
 
-void setShipRelShape (float *, const uint8_t, const uint8_t, const int8_t, const int8_t);
-
 uint8_t rayCastingCollision (int *, uint8_t, int *, uint8_t);
+
+#endif  // LOGIC

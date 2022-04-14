@@ -3,240 +3,15 @@
 #include <keypadc.h>
 #include "gfx/gfx.h"
 
-#include <math.h>
+#include "logic.h"  // also includes math.h libary
 
-#include "logic.h"
+#include "entities/asteroid.h"
+#include "entities/shot.h"
+#include "entities/ship.h"
 
-#define WIDTH 320
-#define HEIGHT 240
-#define maxNumAsteroids 40
-#define maxNumShots 16
-#define asteroidCorners 8
+// TODO.txt
+// add "acceleration" for the player's rotation
 
-const uint8_t shipWidth = 10;
-const uint8_t shipHeight = 20;
-
-// attributes for the ship
-struct ship {
-
-    // for drawing and calculation position
-    struct vector2 velocity;
-    struct vector2 center;
-
-    // calculating position and velocity
-    float speed;
-    uint16_t rotation;
-    float acceleration;
-
-    // creating the ship's shape
-    uint8_t nCorners;
-    float relShape[8];
-    int shape[8];
-
-    // survivability
-    uint8_t lives;
-    int invulnerability;
-
-    // score
-    uint16_t score;
-
-} ship;
-
-// attributes for the shots
-struct shot {
-
-    // positional attributes
-    struct vector2 velocity;
-    struct vector2 center;
-
-    int shape[2];
-
-} shots[maxNumShots];
-
-struct asteroid {
-
-    // positional attributes
-    struct vector2 velocity;
-    struct vector2 center;
-
-    // shape calculations
-    uint8_t radius;
-    float relShape[asteroidCorners*2];
-    int shape[asteroidCorners*2];
-
-} asteroids[maxNumAsteroids];
-
-// move the ship
-void shipMove (float dt) {
-
-    // calculate velocity with trigonometry
-    if (ship.acceleration) {
-        ship.velocity.x += ship.acceleration * cos(ship.rotation / (180/M_PI));
-        ship.velocity.y += ship.acceleration * sin(ship.rotation / (180/M_PI));
-    }
-
-    // move ship
-    ship.center.x += ship.velocity.x * dt;
-    ship.center.y += ship.velocity.y * dt;
-
-    // deaccalerate
-    ship.velocity.x *= 0.97;
-    ship.velocity.y *= 0.97;
-
-    // make sure ship is within map
-    if (ship.center.x < 0)
-        ship.center.x += WIDTH;
-    if (ship.center.x > WIDTH)
-        ship.center.x -= WIDTH;
-    if (ship.center.y < 0)
-        ship.center.y += HEIGHT;
-    if (ship.center.y > HEIGHT)
-        ship.center.y -= HEIGHT;
-
-}
-
-void genShipShape () {
-
-    rotate(ship.relShape, ship.rotation, ship.nCorners); // rotate ship offset
-    for (uint8_t i = 0; i < ship.nCorners*2; i += 2) {
-        // add the ship offset to its center
-        ship.shape[i] = ship.center.x + ship.relShape[i];
-        ship.shape[i+1] = ship.center.y + ship.relShape[i+1];
-    }
-    // reset the ship offset
-    setShipRelShape(ship.relShape, shipWidth, shipHeight, 0, 0);
-
-}
-
-// move the shots
-void shotMove (float dt) {
-    for (uint8_t i = 0; i < maxNumShots; i++) {
-        if (shots[i].center.x != -1 || shots[i].center.y != -1) {
-
-            // move shot
-            shots[i].center.x += shots[i].velocity.x * dt;
-            shots[i].center.y += shots[i].velocity.y * dt;
-
-            // make sure shot is within map
-            if (shots[i].center.x < 0 || shots[i].center.x > WIDTH ||
-                shots[i].center.y < 0 || shots[i].center.y > HEIGHT) {
-                    shots[i].center.x = -1;
-                    shots[i].center.y = -1;
-                    shots[i].velocity.x = 0;
-                    shots[i].velocity.y = 0;
-            }
-            shots[i].shape[0] = shots[i].center.x;
-            shots[i].shape[1] = shots[i].center.y;
-        }
-    }
-}
-
-// initialize variables for asteroids
-void asteroidInit (uint8_t amount) {
-
-    for (uint8_t i = 0; i < amount; i++) {
-        // random size
-        asteroids[i].radius = randInt(20, 25);
-
-        // random center
-        asteroids[i].center.x = randInt(0, WIDTH);
-        asteroids[i].center.y = randInt(0, HEIGHT);
-
-        // set random speed and direction
-        uint8_t speed = randInt(10, 20) / 10;
-        uint16_t direction = randInt(0, 360);
-        asteroids[i].velocity.x = speed * cos(direction / (180/M_PI));
-        asteroids[i].velocity.y = speed * sin(direction / (180/M_PI));
-
-        // create the ships shape
-        for (uint8_t j = 0; j < asteroidCorners*2; j += 2) {
-            asteroids[i].relShape[j] = randInt(asteroids[i].radius / (j % 9 == 0 ? 4 : 2),
-                asteroids[i].radius)*cos(2*M_PI*(j*0.5/asteroidCorners));
-            asteroids[i].relShape[j+1] = randInt(asteroids[i].radius / (j % 9 == 0 ? 4 : 2),
-                asteroids[i].radius)*sin(2*M_PI*(j*0.5/asteroidCorners));
-        }
-        // random rotation
-        rotate(asteroids[i].relShape, randInt(0, 360), asteroidCorners);
-    }
-
-}
-
-// move asteroids and control wheather they are within bounds
-void asteroidMove (float dt) {
-
-    for (uint8_t i = 0; i < maxNumAsteroids; i++) {
-        if (asteroids[i].radius) {
-            asteroids[i].center.x += asteroids[i].velocity.x * dt;
-            asteroids[i].center.y += asteroids[i].velocity.y * dt;
-
-            for (uint8_t j = 0; j < asteroidCorners*2; j += 2) {
-                asteroids[i].shape[j] = asteroids[i].center.x + asteroids[i].relShape[j];
-                asteroids[i].shape[j+1] = asteroids[i].center.y + asteroids[i].relShape[j+1];
-            }
-            if (asteroids[i].center.x + asteroids[i].radius < 0)
-                asteroids[i].center.x += WIDTH + 2*asteroids[i].radius;
-            if (asteroids[i].center.x - asteroids[i].radius > WIDTH)
-                asteroids[i].center.x -= WIDTH + 2*asteroids[i].radius;
-            if (asteroids[i].center.y + asteroids[i].radius < 0)
-                asteroids[i].center.y += HEIGHT + 2*asteroids[i].radius;
-            if (asteroids[i].center.y - asteroids[i].radius > HEIGHT)
-                asteroids[i].center.y -= HEIGHT + 2*asteroids[i].radius;
-        }
-    }
-}
-
-void asteroidSplit (uint8_t id) {
-
-    float speedIncrease = 1.2;
-    float sizeDecrease = 0.75;
-
-    for (uint8_t i = 0; i < maxNumAsteroids; i++) {
-
-        if (!asteroids[i].radius) {
-
-            // inherit half radius
-            asteroids[i].radius = asteroids[id].radius * sizeDecrease;
-
-            // inherit same center
-            asteroids[i].center.x = asteroids[id].center.x;
-            asteroids[i].center.y = asteroids[id].center.y;
-
-            // same speed but offset by delta direction
-            uint16_t deltaDirection = randInt(20, 50);
-            float velX = asteroids[id].velocity.x*cos(deltaDirection / (180/M_PI)) - asteroids[id].velocity.y*sin(deltaDirection / (180/M_PI));
-            float velY = asteroids[id].velocity.y*cos(deltaDirection / (180/M_PI)) + asteroids[id].velocity.x*sin(deltaDirection / (180/M_PI));
-            asteroids[i].velocity.x = speedIncrease * velX;
-            asteroids[i].velocity.y = speedIncrease * velY;
-
-            // create the ships shape
-            for (uint8_t j = 0; j < asteroidCorners*2; j++) {
-                asteroids[i].relShape[j] = asteroids[id].relShape[j] * sizeDecrease;
-            }
-            // random rotation
-            rotate(asteroids[i].relShape, randInt(0, 360), asteroidCorners);
-
-            break;
-        }
-    }
-
-    // half the previous radius
-    asteroids[id].radius *= sizeDecrease;
-
-    // same speed but offset by delta direction
-    uint16_t deltaDirection = -1 * randInt(20, 50);
-    float velX = asteroids[id].velocity.x*cos(deltaDirection / (180/M_PI)) - asteroids[id].velocity.y*sin(deltaDirection / (180/M_PI));
-    float velY = asteroids[id].velocity.y*cos(deltaDirection / (180/M_PI)) + asteroids[id].velocity.x*sin(deltaDirection / (180/M_PI));
-    asteroids[id].velocity.x = speedIncrease * velX;
-    asteroids[id].velocity.y = speedIncrease * velY;
-
-    // create the ships shape
-    for (uint8_t j = 0; j < asteroidCorners*2; j++) {
-        asteroids[id].relShape[j] = asteroids[id].relShape[j] * sizeDecrease;
-    }
-    // random rotation
-    rotate(asteroids[id].relShape, randInt(0, 360), asteroidCorners);
-
-}
 
 void shoot () {
 
@@ -255,8 +30,8 @@ void shoot () {
             return;
         }
     }
-
 }
+
 
 void checkCollisions () {
 
@@ -299,7 +74,7 @@ void checkCollisions () {
                         if (rayCastingCollision(shots[ii].shape, 1, asteroids[i].shape, asteroidCorners)) {
                             ship.score += 25 - asteroids[i].radius;
 
-                            if (asteroids[i].radius > 15) asteroidSplit(i);
+                            if (asteroids[i].radius > 15) asteroidSplit(asteroids, i);
                             else asteroids[i].radius = 0;
 
                             shots[ii].center.x = -1;
@@ -325,7 +100,6 @@ void init () {
     ship.rotation = 270;
 
     ship.nCorners = 4;
-    setShipRelShape(ship.relShape, shipWidth, shipHeight, 0, 0);
 
     for (uint8_t i = 0; i < maxNumShots; i++) {
         shots[i].center.x = -1;
@@ -335,7 +109,7 @@ void init () {
         shots[i].velocity.y = 0;
     }
 
-    asteroidInit(10);
+    asteroidInit(asteroids, 10);
 
     ship.invulnerability = 100;
 
@@ -343,11 +117,11 @@ void init () {
 
 void move (float dt) {
 
-    shipMove(dt);
-    shotMove(dt);
-    asteroidMove(dt);
+    shipMove(&ship, dt);
+    shotMove(shots, dt);
+    asteroidMove(asteroids, dt);
 
-    genShipShape();
+    genShipShape(&ship);
 
 }
 
@@ -389,12 +163,12 @@ void draw () {
         gfx_Polygon(miniShipShape, 4); // draw small ships
     }
 
-    gfx_SetTextFGColor(255);
-    gfx_SetTextBGColor(0);
-    gfx_SetTextTransparentColor(0);
+    gfx_SetTextFGColor(255);  // set text color to white
+    gfx_SetTextBGColor(0);  // set background to black
+    gfx_SetTextTransparentColor(0);  // set all black to transparent
 
-    gfx_SetTextXY(5 + 3 + 8*ship.lives, 8 - 2);
-    gfx_PrintUInt(ship.score, 4);
+    gfx_SetTextXY(5 + 3 + 8*ship.lives, 8 - 2);  // slightly right off lives
+    gfx_PrintUInt(ship.score, 4);  // print the "text"
 
     gfx_SwapDraw(); // show the buffer
 
