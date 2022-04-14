@@ -15,7 +15,7 @@ void shipSpawn (Ship * ship, uint8_t mode) {
     ship->velocity.x = 0;
     ship->velocity.y = 0;
 
-    ship->invulnerability = 100;
+    ship->invulnerability = 70;
 }
 
 // move the ship
@@ -44,6 +44,8 @@ void shipMove (Ship * ship, float dt) {
         ship->center.y += HEIGHT;
     if (ship->center.y > HEIGHT)
         ship->center.y -= HEIGHT;
+
+    genShipShape(ship);
 
 }
 
