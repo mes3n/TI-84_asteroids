@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+#include "logic.h"
+
 // rotates array passed to points around center by rotation
 // degrees with nCorners amount of corner
 void rotate (float *points, int rotation, int nCorners) {
@@ -44,4 +46,14 @@ uint8_t rayCastingCollision (int *points, uint8_t corners_points, int *polygon, 
         else intersects = 0; // reset
     }
     return 0;
+}
+
+float square (float val) {
+
+    return val*val;
+}
+
+uint8_t nearby (struct vector2 p1, struct vector2 p2, float r) {
+
+    return ((square(p1.x - p2.x) + square(p1.y - p2.y) <= square(r)) ? 1 : 0);
 }

@@ -1,5 +1,22 @@
 #include "ship.h"
 
+void shipInit (struct ship * ship) {
+
+    ship->lives = 3;
+    ship->score = 0;
+
+    ship->center.x = WIDTH / 2;
+    ship->center.y = HEIGHT / 2;
+
+    ship->velocity.x = 0;
+    ship->velocity.y = 0;
+    ship->rotation = 270;
+
+    ship->nCorners = 4;
+    ship->invulnerability = 100;
+
+}
+
 // move the ship
 void shipMove (struct ship * ship, float dt) {
 

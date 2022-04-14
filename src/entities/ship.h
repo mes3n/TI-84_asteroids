@@ -35,6 +35,7 @@ struct ship {
 } ship;
 
 
+void shipInit(struct ship *);
 void shipMove(struct ship *, float);
 void genShipShape(struct ship *);
 void setShipRelShape(float *, const uint8_t, const uint8_t, const int8_t, const int8_t);

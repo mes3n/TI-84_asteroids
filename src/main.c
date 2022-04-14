@@ -1,7 +1,6 @@
 #include <tice.h>
 #include <graphx.h>
 #include <keypadc.h>
-#include "gfx/gfx.h"
 
 #include "logic.h"  // also includes math.h libary
 
@@ -13,35 +12,12 @@
 // add "acceleration" for the player's rotation
 
 
-void shoot () {
-
-    for (uint8_t i = 0; i < maxNumShots; i++) {
-        if (shots[i].center.x == -1 && shots[i].center.y == -1) {
-
-            // set shot center to the ship's tip
-            shots[i].center.x = ship.shape[0];
-            shots[i].center.y = ship.shape[1];
-
-            // give a velocity of 7 in the direction of the ship
-            uint8_t speed = 7;
-            shots[i].velocity.x = speed * cos(ship.rotation / (180/M_PI));
-            shots[i].velocity.y = speed * sin(ship.rotation / (180/M_PI));
-
-            return;
-        }
-    }
-}
-
-
 void checkCollisions () {
 
     if (ship.invulnerability <= 0) {
         for (uint8_t i = 0; i < maxNumAsteroids; i++) {
             if (asteroids[i].radius) {
-
-                if ((ship.center.x - asteroids[i].center.x)*(ship.center.x - asteroids[i].center.x)
-                  + (ship.center.y - asteroids[i].center.y)*(ship.center.y - asteroids[i].center.y)
-                  <= (shipHeight/2 + 25)*(shipHeight/2 + 25)) {
+                if (nearby(ship.center, asteroids[i].center, shipHeight/2 + asteroids[i].radius)) {
 
                     if (rayCastingCollision(ship.shape, ship.nCorners, asteroids[i].shape, asteroidCorners) ||
                         rayCastingCollision(asteroids[i].shape, asteroidCorners, ship.shape, ship.nCorners)) {
@@ -67,9 +43,7 @@ void checkCollisions () {
             for (uint8_t ii = 0; ii < maxNumShots; ii++) {
                 if (shots[ii].center.x != -1 || shots[ii].center.y != -1) {
 
-                    if ((shots[ii].center.x - asteroids[i].center.x)*(shots[ii].center.x - asteroids[i].center.x)
-                    +   (shots[ii].center.y - asteroids[i].center.y)*(shots[ii].center.y - asteroids[i].center.y)
-                    <=  (asteroids[i].radius*asteroids[i].radius)) {
+                    if (nearby(shots[ii].center, asteroids[i].center, asteroids[i].radius)) {
 
                         if (rayCastingCollision(shots[ii].shape, 1, asteroids[i].shape, asteroidCorners)) {
                             ship.score += 25 - asteroids[i].radius;
@@ -89,29 +63,10 @@ void checkCollisions () {
 
 void init () {
 
-    ship.lives = 3;
-    ship.score = 0;
-
-    ship.center.x = WIDTH / 2;
-    ship.center.y = HEIGHT / 2;
-
-    ship.velocity.x = 0;
-    ship.velocity.y = 0;
-    ship.rotation = 270;
-
-    ship.nCorners = 4;
-
-    for (uint8_t i = 0; i < maxNumShots; i++) {
-        shots[i].center.x = -1;
-        shots[i].center.y = -1;
-
-        shots[i].velocity.x = 0;
-        shots[i].velocity.y = 0;
-    }
-
+    shipInit(&ship);
+    shotInit(shots);
     asteroidInit(asteroids, 10);
 
-    ship.invulnerability = 100;
 
 }
 
@@ -183,19 +138,19 @@ int main (void) {
     gfx_SetDrawBuffer(); // set drawing to buffer
 
     timer_Enable(TIMER, TIMER_32K, TIMER_NOINT, TIMER_UP);
-    timer_Set(TIMER, 0);
-    float dt;
+    timer_Set(TIMER, 0);  // set timer to 0
+    float dt;  // time passed since last frame
 
     const uint8_t fps = 30;
     const uint16_t ticksPerFrame = 32000/fps;
 
-    init();
-
     uint8_t shotCooldown = 10;
+
+    init();
 
     do {
 
-        while (timer_Get(TIMER) < ticksPerFrame) {}  // wait for 1/60 seconds to have passed
+        while (timer_Get(TIMER) < ticksPerFrame) {}  // do nothing until 1/{fps} seconds to have passed
 
         dt = timer_Get(TIMER) / ticksPerFrame;  // get factor for how much past said time it is
         timer_Set(TIMER, 0);  // reset timer
@@ -203,6 +158,7 @@ int main (void) {
         kb_Scan();  // scan keyboard
         key = kb_Data[7];
 
+        // if (key & {pressed_key}) do left option
         ship.acceleration = (key & kb_Up ? 0.6 : 0);
         ship.rotation += (key & kb_Left ? -18*dt : 0);
         ship.rotation += (key & kb_Right ? 18*dt : 0);
@@ -210,15 +166,15 @@ int main (void) {
         key = kb_Data[1];
 
         // make sure the player can't rapid fire by holding down kb_2nd
-        if (!(key & kb_2nd)) {
+        if (!(key & kb_2nd)) {  // if kb_2nd isn't pressed
             shotCooldown = 0;
         }
         else if (shotCooldown) {
             shotCooldown -= 1;
         }
         else if (key & kb_2nd) {
+                shotShoot(shots, ship.shape[0], ship.shape[1], ship.rotation);
                 shotCooldown = 10;
-                shoot();
         }
 
         move(dt);
@@ -227,8 +183,8 @@ int main (void) {
 
         draw();
 
-    } while (ship.lives && kb_Data[6] != kb_Clear); // exit if clear is pressed or all lives are lost
+    } while (ship.lives && kb_Data[6] != kb_Clear); // exit if all lives are lost or clear is pressed
 
-    gfx_End(); // stop drawing routine
-    return 0;
+    gfx_End(); // stop drawing routines
+    return 0;  // exit program
 }

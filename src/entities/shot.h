@@ -16,6 +16,8 @@ struct shot {
 
 } shots[maxNumShots];
 
+void shotInit(struct shot *);
+void shotShoot(struct shot *, int, int, uint16_t);
 void shotMove(struct shot *, float);
 
 #endif  // SHOT_H
