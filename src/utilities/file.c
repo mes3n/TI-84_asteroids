@@ -1,3 +1,4 @@
+#include <tice.h>
 #include "file.h"
 
 void saveVar (float var) {

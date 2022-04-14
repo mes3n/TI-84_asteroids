@@ -3,8 +3,6 @@
 
 #include <keypadc.h>
 
-#include "../entities.h"
-
 uint8_t shotCooldown;
 
 void scanKeypad (float);

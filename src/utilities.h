@@ -1,9 +1,16 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-#include "utilities/graphics.h"
-#include "utilities/keypad.h"
-#include "utilities/logic.h"  // also includes math.h libary
-#include "utilities/file.h"
+/*
+#include <tice.h>
+#include <graphx.h>
+#include <keypadc.h>
+#include <fileioc.h>
+*/
 
-#enfif  // UTILITIES_H
+#include "utilities/graphics.h"  // graphx.h
+#include "utilities/keypad.h"  // keypadc.h
+#include "utilities/logic.h"  // math.h and tice.h
+#include "utilities/file.h"  // fileioc.h
+
+#endif  // UTILITIES_H

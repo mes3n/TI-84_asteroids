@@ -6,10 +6,6 @@
 #define GRAY 2
 
 #include <graphx.h>
-#include "../gfx/gfx.h"
-
-#include "../entities.h"
-#include "logic.h"
 
 void initGraphics (void);
 void checkCollisions (void);

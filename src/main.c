@@ -1,5 +1,3 @@
-#include <tice.h>
-
 #include "utilities.h"
 #include "entities.h"
 
@@ -11,6 +9,7 @@ Asteroid asteroids[maxNumAsteroids];
 // add "acceleration" for the player's rotation
 // see over frame drops - optimize loops
 // add "waves" of asteroids spawning
+// make sure #includes are placed correctly
 
 void init (uint8_t mode) {
     if (mode == 0) {

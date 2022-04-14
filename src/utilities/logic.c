@@ -1,7 +1,3 @@
-#include <tice.h>
-
-#include <math.h>
-
 #include "logic.h"
 
 // rotates array passed to points around center by rotation

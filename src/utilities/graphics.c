@@ -1,3 +1,7 @@
+#include "../gfx/gfx.h"
+#include "logic.h"
+#include "../entities.h"
+
 #include "graphics.h"
 
 void initGraphics (void) {

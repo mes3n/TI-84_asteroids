@@ -1,3 +1,4 @@
+#include "../entities.h"
 #include "keypad.h"
 
 void scanKeypad (float dt) {

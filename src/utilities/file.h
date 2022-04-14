@@ -2,7 +2,6 @@
 #define FILE_H
 
 #include <fileioc.h>
-#include <tice.h>
 
 char * location = ti_W;
 
