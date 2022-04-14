@@ -16,15 +16,7 @@ Asteroid asteroids[maxNumAsteroids];
 
 void init (uint8_t mode) {
     if (mode == 0) {
-        gfx_Begin(); // start drawing routine
-        gfx_SetDrawBuffer(); // set drawing to buffer
-
-        gfx_SetPalette(global_palette, sizeof_global_palette, 0);
-
-        gfx_SetColor(WHITE); // set draw color to white
-        gfx_SetTextFGColor(WHITE);  // set text color to white
-        gfx_SetTextBGColor(BLACK);  // set background to black
-        gfx_SetTextTransparentColor(BLACK);  // set all black to transparent
+        initGraphics();
     }
 
     shipSpawn(&ship, 0);

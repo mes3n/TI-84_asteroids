@@ -10,6 +10,7 @@
 #include "../entities.h"
 #include "logic.h"
 
+void initGraphics (void);
 void checkCollisions (void);
 void draw (void);
 void drawMenu (void);
