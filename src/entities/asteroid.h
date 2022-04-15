@@ -19,10 +19,11 @@ typedef struct Asteroid {
 
 } Asteroid;
 
-extern Asteroid asteroids[maxNumAsteroids];
+extern Asteroid asteroids[maxNumAsteroids];  // declare asteroids variable 
 
-void asteroidInit (Asteroid *, uint8_t);
+void asteroidInit (Asteroid *, uint8_t, float);
 void asteroidMove (Asteroid *, float);
 void asteroidSplit (Asteroid *, uint8_t);
+uint8_t asteroidAreGone (Asteroid *);
 
 #endif  // ASTEROID_H

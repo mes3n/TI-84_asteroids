@@ -1,24 +1,17 @@
 #include "utilities.h"
 #include "entities.h"
 
+// define following variables
 Ship ship;
 Shot shots[maxNumShots];
 Asteroid asteroids[maxNumAsteroids];
 
-// TODO.txt
-// add "acceleration" for the player's rotation
-// see over frame drops - optimize loops
-// add "waves" of asteroids spawning
-// make sure #includes are placed correctly
 
-void init (uint8_t mode) {
-    if (mode == 0) {
-        initGraphics();
-    }
+void init () {
 
     shipSpawn(&ship, 0);
     shotInit(shots);
-    asteroidInit(asteroids, 6);
+    asteroidInit(asteroids, 5, 1);
 
 }
 
@@ -32,50 +25,46 @@ void move (float dt) {
 
 int main (void) {
 
-    uint16_t highscore = readVar();
+    uint16_t highscore = readVar();  // previous highscore
+    uint8_t wave = 0;  // count the waves
 
-    const uint8_t TIMER = 1;
-
-    timer_Enable(TIMER, TIMER_32K, TIMER_NOINT, TIMER_UP);
-    timer_Set(TIMER, 0);  // set timer to 0
-    float dt;  // time passed since last frame
-
-    const uint8_t FPS = 20;  // customize the fps at will, display max is 60, i think
-    const uint16_t ticksPerFrame = 32000/FPS;
-
-    init(0);
+    initGraphics();  // initialize graphic related processes
 
     do {  // app loop
 
-        drawMenu(highscore, 0);
+        drawMenu(highscore, 0);  // init asteroids and draw menu
         while (!os_GetCSC()) {
-            asteroidMove(asteroids, 1);
-            drawMenu(highscore, 1);
+            asteroidMove(asteroids, 1);  // move asteroids to improve menu
+            drawMenu(highscore, 1);  // only draw menu
         }
+
+        init();  // init the entities
 
         do {  // gameloop
 
-            while (timer_Get(TIMER) < ticksPerFrame) {}  // do nothing until 1/{fps} seconds to have passed
-
-            dt = timer_Get(TIMER) / ticksPerFrame;  // get factor for how much past said time it is
-            timer_Set(TIMER, 0);  // reset timer
+            capFPS(ticksPerFrame, &dt);  // cap fps value set in graphics.h
 
             scanKeypad(dt);
 
-            move(dt);
+            move(dt);  // move entities
 
-            checkCollisions();
+            checkCollisions();  // from graphics.h
 
-            draw();
+            draw();  // from graphics.h
+
+            if (asteroidAreGone(asteroids)) {  // if all asteroids are gone
+                wave += 1;  // next wave
+                // create more and faster asteroids based of linear equations
+                asteroidInit(asteroids, 3*wave + 5, 0.3*wave + 1);
+                ship.invulnerability = 70;  // add invulnerability
+            }
 
         } while (ship.lives && kb_Data[6] != kb_Clear); // exit if dead or clear was pressed
 
-        if (ship.score > highscore) {
-            saveVar(ship.score);
-            highscore = ship.score;
+        if (ship.score > highscore) {  // see if highscore was beaten
+            saveVar(ship.score);  // in that case, save it
+            highscore = ship.score;  // set highscore variable to new highscore
         }
-
-        init(1);
 
     } while (kb_Data[6] != kb_Clear);  // exit if clear is pressed
 

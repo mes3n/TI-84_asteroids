@@ -1,7 +1,7 @@
 #include "asteroid.h"
 
 // initialize variables for asteroids
-void asteroidInit (Asteroid * asteroids, uint8_t amount) {
+void asteroidInit (Asteroid * asteroids, uint8_t amount, float speedFactor) {
 
     for (uint8_t i = 0; i < amount; i++) {
         // random size
@@ -12,7 +12,7 @@ void asteroidInit (Asteroid * asteroids, uint8_t amount) {
         asteroids[i].center.y = randInt(0, HEIGHT);
 
         // set random speed and direction
-        uint8_t speed = randInt(10, 20) / 10;
+        uint8_t speed = (randInt(10, 20) / 10) * speedFactor;
         uint16_t direction = randInt(0, 360);
         asteroids[i].velocity.x = speed * cos(direction / (180/M_PI));
         asteroids[i].velocity.y = speed * sin(direction / (180/M_PI));
@@ -38,7 +38,8 @@ void asteroidInit (Asteroid * asteroids, uint8_t amount) {
 void asteroidMove (Asteroid * asteroids, float dt) {
 
     for (uint8_t i = 0; i < maxNumAsteroids; i++) {
-        if (asteroids[i].radius) {
+        if (asteroids[i].radius) {  // if asteroid exists
+            // scale velocity to match the elapsed time
             asteroids[i].center.x += asteroids[i].velocity.x * dt;
             asteroids[i].center.y += asteroids[i].velocity.y * dt;
 
@@ -46,6 +47,7 @@ void asteroidMove (Asteroid * asteroids, float dt) {
                 asteroids[i].shape[j] = asteroids[i].center.x + asteroids[i].relShape[j];
                 asteroids[i].shape[j+1] = asteroids[i].center.y + asteroids[i].relShape[j+1];
             }
+            // move ship to the other side of bounds if it's outside one bound
             if (asteroids[i].center.x + asteroids[i].radius < 0)
                 asteroids[i].center.x += WIDTH + 2*asteroids[i].radius;
             if (asteroids[i].center.x - asteroids[i].radius > WIDTH)
@@ -61,12 +63,12 @@ void asteroidMove (Asteroid * asteroids, float dt) {
 
 void asteroidSplit (Asteroid * asteroids, uint8_t id) {
 
-    float speedIncrease = 1.2;
-    float sizeDecrease = 0.75;
+    float speedIncrease = 1.2;  // increase speed of smaller asteroids
+    float sizeDecrease = 0.75;  // decrease readius of smaller asteroids
 
     for (uint8_t i = 0; i < maxNumAsteroids; i++) {
 
-        if (!asteroids[i].radius) {
+        if (!asteroids[i].radius) {  // empty asteroid spot
 
             // inherit half radius
             asteroids[i].radius = asteroids[id].radius * sizeDecrease;
@@ -93,6 +95,8 @@ void asteroidSplit (Asteroid * asteroids, uint8_t id) {
         }
     }
 
+    // change values for the origin asteroids as well
+
     // half the previous radius
     asteroids[id].radius *= sizeDecrease;
 
@@ -110,4 +114,13 @@ void asteroidSplit (Asteroid * asteroids, uint8_t id) {
     // random rotation
     rotate(asteroids[id].relShape, randInt(0, 360), asteroidCorners);
 
+}
+
+uint8_t asteroidAreGone (Asteroid * asteroids) {
+
+    for (uint8_t i = 0; i < maxNumAsteroids; i++) {
+        if (asteroids[i].radius)  // there is one asteroid
+            return 0;  // return false
+    }
+    return 1;  // no asteroids were found, return true
 }
