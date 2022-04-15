@@ -16,10 +16,10 @@ typedef struct Shot {
 
 } Shot;
 
-extern Shot shots[maxNumShots];
+extern Shot shots[maxNumShots];  // declare shot variable
 
 void shotInit(Shot *);
-void shotShoot(Shot *, int, int, uint16_t);
+void shotShoot(Shot *, int, int, uint16_t);  // used to make the ship shoot a shot
 void shotMove(Shot *, float);
 
 #endif  // SHOT_H

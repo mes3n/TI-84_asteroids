@@ -3,6 +3,7 @@
 
 #include "../utilities/logic.h"
 
+// determines to shape of the ship
 const uint8_t shipWidth = 10;
 const uint8_t shipHeight = 20;
 
@@ -32,7 +33,7 @@ typedef struct Ship {
 
 } Ship;
 
-extern Ship ship;
+extern Ship ship;  // declare ship variable
 
 void shipSpawn(Ship *, uint8_t);
 void shipMove(Ship *, float);

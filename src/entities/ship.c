@@ -7,8 +7,9 @@ void shipSpawn (Ship * ship, uint8_t mode) {
         ship->score = 0;
 
         ship->nCorners = 4;
-        ship->rotation = 270;
+        ship->rotation = 270;  // facing upwards on display
     }
+    // center of map
     ship->center.x = WIDTH / 2;
     ship->center.y = HEIGHT / 2;
 

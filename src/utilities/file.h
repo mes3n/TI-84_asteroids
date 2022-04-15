@@ -3,7 +3,7 @@
 
 #include <fileioc.h>
 
-char * location = ti_W;
+char * location = ti_W;  // the location of the varialbe to save score to
 
 void saveVar (float);
 float readVar (void);

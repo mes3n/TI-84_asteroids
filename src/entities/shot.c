@@ -1,5 +1,6 @@
 #include "shot.h"
 
+// init shots but make sure they "don't exist"
 void shotInit (Shot * shots) {
 
     for (uint8_t i = 0; i < maxNumShots; i++) {
@@ -11,7 +12,7 @@ void shotInit (Shot * shots) {
     }
 }
 
-// shoot the a shot from ships tip
+// shoot the a shot from ships tip in the direction of the ship
 void shotShoot (Shot * shots, int origin_x, int origin_y, uint16_t direction) {
 
     for (uint8_t i = 0; i < maxNumShots; i++) {
@@ -26,7 +27,7 @@ void shotShoot (Shot * shots, int origin_x, int origin_y, uint16_t direction) {
             shots[i].velocity.x = speed * cos(direction / (180/M_PI));
             shots[i].velocity.y = speed * sin(direction / (180/M_PI));
 
-            return;
+            return;  // only give values to one shot
         }
     }
 }
@@ -37,10 +38,10 @@ void shotMove (Shot * shots, float dt) {
         if (shots[i].center.x != -1 || shots[i].center.y != -1) {
 
             // move shot
-            shots[i].center.x += shots[i].velocity.x * dt;
+            shots[i].center.x += shots[i].velocity.x * dt;  // move more if more time has passed
             shots[i].center.y += shots[i].velocity.y * dt;
 
-            // make sure shot is within map
+            // remove shot if outside map
             if (shots[i].center.x < 0 || shots[i].center.x > WIDTH ||
                 shots[i].center.y < 0 || shots[i].center.y > HEIGHT) {
                     shots[i].center.x = -1;
@@ -48,6 +49,7 @@ void shotMove (Shot * shots, float dt) {
                     shots[i].velocity.x = 0;
                     shots[i].velocity.y = 0;
             }
+            // send the center to array of int for drawing routines
             shots[i].shape[0] = shots[i].center.x;
             shots[i].shape[1] = shots[i].center.y;
         }
