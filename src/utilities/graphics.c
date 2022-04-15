@@ -158,6 +158,9 @@ void drawMenu (uint16_t highscore, uint8_t mode) {
     gfx_PrintStringXY("highscore - ", x_pos, HEIGHT * 0.2 + 30);
     gfx_PrintStringXY(score, x_pos + gfx_GetStringWidth("highscore - "), HEIGHT * 0.2 + 30);
 
+    // print creater name
+    x_pos = (WIDTH - gfx_GetStringWidth("created by mes3n")) * 0.5;
+    gfx_PrintStringXY("created by mes3n", x_pos, HEIGHT - 10);
     gfx_SwapDraw();
 
 }
